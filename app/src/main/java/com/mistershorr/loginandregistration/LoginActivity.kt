@@ -4,8 +4,13 @@ import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.backendless.Backendless
+import com.backendless.BackendlessUser
+import com.backendless.async.callback.AsyncCallback
+import com.backendless.exceptions.BackendlessFault
 import com.mistershorr.loginandregistration.databinding.ActivityLoginBinding
 
 class LoginActivity : AppCompatActivity() {
@@ -32,6 +37,28 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        Backendless.initApp(this, Constants.APP_ID, Constants.API_KEY)
+        val sleepListIntent = Intent(this, SleepListActivity::class.java)
+        binding.buttonLoginLogin.setOnClickListener{
+            Backendless.UserService.login(
+                binding.editTextLoginUsername.text.toString(),
+                binding.editTextLoginPassword.text.toString(),
+                object : AsyncCallback<BackendlessUser> {
+                    override fun handleResponse(user: BackendlessUser?) {
+                        Log.d(
+                            "LoginActivity",
+                            "handleResponse: ${user?.getProperty("username")} has logged in."
+                        )
+                        startRegistrationForResult.launch(sleepListIntent)
+                    }
+
+                    override fun handleFault(fault: BackendlessFault) {
+                        Log.d("LoginActivity", "handleFault: ${fault.message}")
+                    }
+                })
+
+        }
 
         // launch the Registration Activity
         binding.textViewLoginSignup.setOnClickListener {
